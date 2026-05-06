@@ -955,7 +955,7 @@ export default function KaijuRunner() {
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
@@ -972,8 +972,26 @@ export default function KaijuRunner() {
             Atual: {SKINS.find(s => s.id === skinId)?.name}
           </span>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <Button
+            variant={autoNight ? "default" : "outline"}
+            size="sm"
+            onClick={() => setAutoNight((v) => !v)}
+            className="font-mono text-xs"
+            title={`Vira noite ao atingir ${NIGHT_THRESHOLD} pts`}
+          >
+            {autoNight ? "🌙 Auto-Noite: ON" : "🌙 Auto-Noite: OFF"}
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
+      {autoNight && (
+        <p className="text-xs text-muted-foreground font-mono -mt-2">
+          {score < NIGHT_THRESHOLD
+            ? `☀️ Modo dia · vira noite em ${NIGHT_THRESHOLD - score} pts`
+            : `🌙 Modo noite ativo · volta ao dia se a pontuação cair abaixo de ${NIGHT_THRESHOLD}`}
+        </p>
+      )}
 
       {showSkinMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-4">
