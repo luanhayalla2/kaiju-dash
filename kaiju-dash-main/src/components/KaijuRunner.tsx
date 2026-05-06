@@ -804,18 +804,18 @@ export default function KaijuRunner() {
 
       ctx.restore();
 
-      // invulnerability indicator (HUD)
+      // invulnerability indicator (HUD on canvas) — adapta ao tema
       if (player.invuln > 0) {
         const barW = 100;
         const barH = 6;
         const bx = 20;
         const by = 20;
-        ctx.fillStyle = "rgba(0,0,0,0.4)";
+        ctx.fillStyle = mix > 0.5 ? "hsla(0,0%,100%,0.12)" : "hsla(0,0%,0%,0.35)";
         ctx.fillRect(bx, by, barW, barH);
-        ctx.fillStyle = "hsl(0, 100%, 60%)";
+        ctx.fillStyle = mix > 0.5 ? "hsl(340, 100%, 70%)" : "hsl(0, 100%, 55%)";
         ctx.fillRect(bx, by, (player.invuln / 80) * barW, barH);
-        ctx.fillStyle = "white";
-        ctx.font = "10px monospace";
+        ctx.fillStyle = mix > 0.5 ? "hsl(0, 0%, 95%)" : "hsl(0, 0%, 15%)";
+        ctx.font = "bold 10px monospace";
         ctx.fillText("INVULNERÁVEL", bx, by - 5);
       }
 
