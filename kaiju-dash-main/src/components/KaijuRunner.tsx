@@ -56,11 +56,26 @@ export default function KaijuRunner() {
   const shieldRef = useRef<() => void>(() => {});
   const restartRef = useRef<() => void>(() => {});
   const skinRef = useRef<Skin>(SKINS[0]);
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const isDarkRef = useRef<boolean>(true);
+  // 0 = dia, 1 = noite (interpolado suavemente para transição)
+  const themeMixRef = useRef<number>(1);
+  const themeTargetRef = useRef<number>(1);
   useEffect(() => {
     isDarkRef.current = resolvedTheme !== "light";
+    themeTargetRef.current = resolvedTheme === "light" ? 0 : 1;
   }, [resolvedTheme]);
+
+  // auto night mode by score
+  const [autoNight, setAutoNight] = useState<boolean>(() => {
+    return localStorage.getItem("kaiju-auto-night") === "1";
+  });
+  const autoNightRef = useRef(autoNight);
+  useEffect(() => {
+    autoNightRef.current = autoNight;
+    localStorage.setItem("kaiju-auto-night", autoNight ? "1" : "0");
+  }, [autoNight]);
+  const NIGHT_THRESHOLD = 300;
 
   const [score, setScore] = useState(0);
   const [best, setBest] = useState<number>(() => {
