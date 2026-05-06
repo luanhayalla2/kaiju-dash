@@ -494,30 +494,48 @@ export default function KaijuRunner() {
         ctx.translate((Math.random() - 0.5) * player.shake, (Math.random() - 0.5) * player.shake);
       }
 
-      const isDark = isDarkRef.current;
-      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      if (isDark) {
-        bg.addColorStop(0, "hsl(222 47% 8%)");
-        bg.addColorStop(1, "hsl(280 40% 14%)");
-      } else {
-        bg.addColorStop(0, "hsl(205 90% 75%)");
-        bg.addColorStop(1, "hsl(190 80% 88%)");
+      // ===== auto night mode by score =====
+      if (autoNightRef.current && !over) {
+        const wantNight = localScore >= NIGHT_THRESHOLD;
+        const nextTarget = wantNight ? 1 : 0;
+        if (themeTargetRef.current !== nextTarget) {
+          themeTargetRef.current = nextTarget;
+          // sync app theme (smooth — dark class flips, but our canvas mix lerps)
+          setTheme(wantNight ? "dark" : "light");
+        }
       }
+
+      // smooth theme interpolation (mix: 0 = dia, 1 = noite)
+      const target = themeTargetRef.current;
+      themeMixRef.current += (target - themeMixRef.current) * 0.04;
+      const mix = themeMixRef.current;
+      const isDark = mix > 0.5;
+
+      // helpers de cor (mistura entre dia e noite)
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      const mixHsl = (
+        dayH: number, dayS: number, dayL: number,
+        nightH: number, nightS: number, nightL: number,
+        a = 1,
+      ) =>
+        `hsla(${lerp(dayH, nightH, mix).toFixed(1)}, ${lerp(dayS, nightS, mix).toFixed(1)}%, ${lerp(dayL, nightL, mix).toFixed(1)}%, ${a})`;
+
+      // sky gradient (interpolado)
+      const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bg.addColorStop(0, mixHsl(205, 90, 75, 222, 47, 8));
+      bg.addColorStop(1, mixHsl(190, 80, 88, 280, 40, 14));
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // stars (noite) ou nuvens (dia)
-      if (isDark) {
-        ctx.fillStyle = "hsla(0,0%,100%,0.5)";
-        for (let i = 0; i < 40; i++) {
-          const sx = (i * 97 + frame * 0.4) % canvas.width;
-          const sy = (i * 53) % (canvas.height - 80);
-          ctx.fillRect(canvas.width - sx, sy, 2, 2);
-        }
-      } else {
-        ctx.fillStyle = "hsla(0,0%,100%,0.85)";
+      // ===== céu: nuvens (dia) com fade-out + estrelas (noite) com parallax/twinkle =====
+      const dayAlpha = 1 - mix;
+      const nightAlpha = mix;
+
+      // nuvens — visíveis no dia
+      if (dayAlpha > 0.02) {
+        ctx.globalAlpha = 0.85 * dayAlpha;
+        ctx.fillStyle = "hsl(0, 0%, 100%)";
         for (let i = 0; i < 6; i++) {
-          const cw = 60 + (i * 17) % 40;
           const cx = (canvas.width - ((i * 220 + frame * 0.3) % (canvas.width + 200)));
           const cy = 40 + (i * 37) % 120;
           ctx.beginPath();
@@ -526,12 +544,39 @@ export default function KaijuRunner() {
           ctx.arc(cx + 44, cy, 16, 0, Math.PI * 2);
           ctx.fill();
         }
+        ctx.globalAlpha = 1;
       }
 
-      // ground
-      ctx.fillStyle = isDark ? "hsl(222 30% 18%)" : "hsl(95 35% 45%)";
+      // estrelas — 3 camadas de parallax + twinkle + float
+      if (nightAlpha > 0.02) {
+        const layers = [
+          { count: 28, speed: 0.15, size: 1, alpha: 0.5 },
+          { count: 18, speed: 0.35, size: 2, alpha: 0.75 },
+          { count: 10, speed: 0.6, size: 2, alpha: 1.0 },
+        ];
+        for (let li = 0; li < layers.length; li++) {
+          const L = layers[li];
+          for (let i = 0; i < L.count; i++) {
+            const seed = i * 97 + li * 311;
+            const baseX = (seed) % canvas.width;
+            const sx = (baseX + frame * L.speed) % canvas.width;
+            const baseY = (seed * 53) % (canvas.height - 100);
+            // float vertical leve (parallax)
+            const sy = baseY + Math.sin(frame * 0.02 + i * 0.7) * (1 + li);
+            // twinkle
+            const tw = 0.6 + 0.4 * Math.sin(frame * 0.06 + i * 1.3);
+            ctx.globalAlpha = L.alpha * tw * nightAlpha;
+            ctx.fillStyle = "hsl(0, 0%, 100%)";
+            ctx.fillRect(canvas.width - sx, sy, L.size, L.size);
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // ground (interpolado)
+      ctx.fillStyle = mixHsl(95, 35, 45, 222, 30, 18);
       ctx.fillRect(0, groundY(), canvas.width, canvas.height - groundY());
-      ctx.strokeStyle = isDark ? "hsl(160 80% 50%)" : "hsl(95 60% 30%)";
+      ctx.strokeStyle = mixHsl(95, 60, 30, 160, 80, 50);
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, groundY());
