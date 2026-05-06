@@ -780,6 +780,28 @@ export default function KaijuRunner() {
         ctx.fillRect(px + pw - 14, py + 18, 6, 10);
       }
 
+      // ===== iluminação noturna do kaiju =====
+      // overlay azulado para escurecer/integrar com o céu noturno
+      if (mix > 0.05) {
+        ctx.save();
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.globalAlpha = mix * 0.32;
+        ctx.fillStyle = "hsl(230, 60%, 18%)";
+        ctx.fillRect(px - 24, py - 4, pw + 48, ph + 14);
+        ctx.restore();
+
+        // rim light frio no topo (lua)
+        ctx.save();
+        ctx.globalCompositeOperation = "source-atop";
+        ctx.globalAlpha = mix * 0.45;
+        const rim = ctx.createLinearGradient(0, py, 0, py + ph * 0.4);
+        rim.addColorStop(0, "hsla(200, 90%, 80%, 0.9)");
+        rim.addColorStop(1, "hsla(200, 90%, 80%, 0)");
+        ctx.fillStyle = rim;
+        ctx.fillRect(px - 24, py - 4, pw + 48, ph * 0.5);
+        ctx.restore();
+      }
+
       ctx.restore();
 
       // invulnerability indicator (HUD)
