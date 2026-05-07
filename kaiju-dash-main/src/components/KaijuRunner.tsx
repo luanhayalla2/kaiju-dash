@@ -75,7 +75,16 @@ export default function KaijuRunner() {
     autoNightRef.current = autoNight;
     localStorage.setItem("kaiju-auto-night", autoNight ? "1" : "0");
   }, [autoNight]);
-  const NIGHT_THRESHOLD = 300;
+  const [nightThreshold, setNightThreshold] = useState<number>(() => {
+    const v = localStorage.getItem("kaiju-night-threshold");
+    const n = v ? parseInt(v, 10) : 300;
+    return Number.isFinite(n) && n >= 0 ? n : 300;
+  });
+  const nightThresholdRef = useRef(nightThreshold);
+  useEffect(() => {
+    nightThresholdRef.current = nightThreshold;
+    localStorage.setItem("kaiju-night-threshold", String(nightThreshold));
+  }, [nightThreshold]);
 
   const [score, setScore] = useState(0);
   const [best, setBest] = useState<number>(() => {
