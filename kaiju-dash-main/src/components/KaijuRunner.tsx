@@ -157,17 +157,45 @@ export default function KaijuRunner() {
       } catch (e) { console.error(e); }
     };
 
+    // Sons mudam levemente no modo noturno (pitch mais grave + ambiência)
+    const nightFactor = () => {
+      const m = themeMixRef.current;
+      return { mix: m, pitch: 1 - m * 0.35, vol: 1 + m * 0.1 };
+    };
     const sounds = {
-      jump: () => playSound("square", 150, 0.2, 0.05, 400),
-      land: () => playSound("triangle", 100, 0.1, 0.08, 50),
-      coin: () => playSound("sine", 800, 0.15, 0.05, 1200),
-      laser: () => playSound("sawtooth", 400, 0.2, 0.03, 100),
+      jump: () => {
+        const n = nightFactor();
+        playSound(n.mix > 0.5 ? "sine" : "square", 150 * n.pitch, 0.2, 0.05 * n.vol, 400 * n.pitch);
+      },
+      land: () => {
+        const n = nightFactor();
+        playSound("triangle", 100 * n.pitch, 0.1 + n.mix * 0.08, 0.08 * n.vol, 50 * n.pitch);
+        if (n.mix > 0.5) playSound("sine", 60, 0.3, 0.04, 30); // eco grave noturno
+      },
+      coin: () => {
+        const n = nightFactor();
+        playSound("sine", 800 * n.pitch, 0.15, 0.05, 1200 * n.pitch);
+        if (n.mix > 0.5) setTimeout(() => playSound("sine", 1600, 0.18, 0.025, 2200), 50);
+      },
+      laser: () => {
+        const n = nightFactor();
+        playSound(n.mix > 0.5 ? "triangle" : "sawtooth", 400 * n.pitch, 0.2, 0.03 * n.vol, 100 * n.pitch);
+      },
       damage: () => playSound("sawtooth", 100, 0.4, 0.1, 40),
       shieldOn: () => {
-        playSound("sine", 300, 0.25, 0.06, 900);
-        setTimeout(() => playSound("triangle", 600, 0.2, 0.04, 1100), 60);
+        const n = nightFactor();
+        playSound("sine", 300 * n.pitch, 0.25, 0.06, 900 * n.pitch);
+        setTimeout(() => playSound("triangle", 600 * n.pitch, 0.2, 0.04, 1100 * n.pitch), 60);
       },
       shieldBlock: () => playSound("square", 700, 0.15, 0.07, 200),
+      nightOn: () => {
+        playSound("sine", 200, 1.2, 0.05, 80);
+        setTimeout(() => playSound("triangle", 400, 0.8, 0.035, 150), 100);
+      },
+      dayOn: () => {
+        playSound("sine", 500, 0.8, 0.04, 1000);
+        setTimeout(() => playSound("triangle", 700, 0.6, 0.03, 1200), 80);
+      },
     };
 
     let prevOnGround = true;
