@@ -987,7 +987,7 @@ export default function KaijuRunner() {
             size="sm"
             onClick={() => setAutoNight((v) => !v)}
             className="font-mono text-xs"
-            title={`Vira noite ao atingir ${NIGHT_THRESHOLD} pts`}
+            title={`Vira noite ao atingir ${nightThreshold} pts`}
           >
             {autoNight ? "🌙 Auto-Noite: ON" : "🌙 Auto-Noite: OFF"}
           </Button>
@@ -995,10 +995,11 @@ export default function KaijuRunner() {
         </div>
       </div>
       {autoNight && (
-        <p className="text-xs text-muted-foreground font-mono -mt-2">
-          {score < NIGHT_THRESHOLD
-            ? `☀️ Modo dia · vira noite em ${NIGHT_THRESHOLD - score} pts`
-            : `🌙 Modo noite ativo · volta ao dia se a pontuação cair abaixo de ${NIGHT_THRESHOLD}`}
+        <div className="-mt-2 flex flex-col gap-1">
+          <p className="text-xs text-muted-foreground font-mono">
+            {score < nightThreshold
+              ? `☀️ Modo dia · vira noite em ${nightThreshold - score} pts`
+              : `🌙 Modo noite ativo · volta ao dia se a pontuação cair abaixo de ${nightThreshold}`}
         </p>
       )}
 
