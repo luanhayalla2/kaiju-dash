@@ -505,7 +505,7 @@ export default function KaijuRunner() {
 
       // ===== auto night mode by score =====
       if (autoNightRef.current && !over) {
-        const wantNight = localScore >= NIGHT_THRESHOLD;
+        const wantNight = localScore >= nightThresholdRef.current;
         const nextTarget = wantNight ? 1 : 0;
         if (themeTargetRef.current !== nextTarget) {
           themeTargetRef.current = nextTarget;
