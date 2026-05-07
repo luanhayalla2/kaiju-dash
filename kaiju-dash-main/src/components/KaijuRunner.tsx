@@ -75,7 +75,16 @@ export default function KaijuRunner() {
     autoNightRef.current = autoNight;
     localStorage.setItem("kaiju-auto-night", autoNight ? "1" : "0");
   }, [autoNight]);
-  const NIGHT_THRESHOLD = 300;
+  const [nightThreshold, setNightThreshold] = useState<number>(() => {
+    const v = localStorage.getItem("kaiju-night-threshold");
+    const n = v ? parseInt(v, 10) : 300;
+    return Number.isFinite(n) && n >= 0 ? n : 300;
+  });
+  const nightThresholdRef = useRef(nightThreshold);
+  useEffect(() => {
+    nightThresholdRef.current = nightThreshold;
+    localStorage.setItem("kaiju-night-threshold", String(nightThreshold));
+  }, [nightThreshold]);
 
   const [score, setScore] = useState(0);
   const [best, setBest] = useState<number>(() => {
@@ -148,18 +157,65 @@ export default function KaijuRunner() {
       } catch (e) { console.error(e); }
     };
 
+    // Sons mudam levemente no modo noturno (pitch mais grave + ambiência)
+    const nightFactor = () => {
+      const m = themeMixRef.current;
+      return { mix: m, pitch: 1 - m * 0.35, vol: 1 + m * 0.1 };
+    };
     const sounds = {
-      jump: () => playSound("square", 150, 0.2, 0.05, 400),
-      land: () => playSound("triangle", 100, 0.1, 0.08, 50),
-      coin: () => playSound("sine", 800, 0.15, 0.05, 1200),
-      laser: () => playSound("sawtooth", 400, 0.2, 0.03, 100),
+      jump: () => {
+        const n = nightFactor();
+        playSound(n.mix > 0.5 ? "sine" : "square", 150 * n.pitch, 0.2, 0.05 * n.vol, 400 * n.pitch);
+      },
+      land: () => {
+        const n = nightFactor();
+        playSound("triangle", 100 * n.pitch, 0.1 + n.mix * 0.08, 0.08 * n.vol, 50 * n.pitch);
+        if (n.mix > 0.5) playSound("sine", 60, 0.3, 0.04, 30); // eco grave noturno
+      },
+      coin: () => {
+        const n = nightFactor();
+        playSound("sine", 800 * n.pitch, 0.15, 0.05, 1200 * n.pitch);
+        if (n.mix > 0.5) setTimeout(() => playSound("sine", 1600, 0.18, 0.025, 2200), 50);
+      },
+      laser: () => {
+        const n = nightFactor();
+        playSound(n.mix > 0.5 ? "triangle" : "sawtooth", 400 * n.pitch, 0.2, 0.03 * n.vol, 100 * n.pitch);
+      },
       damage: () => playSound("sawtooth", 100, 0.4, 0.1, 40),
       shieldOn: () => {
-        playSound("sine", 300, 0.25, 0.06, 900);
-        setTimeout(() => playSound("triangle", 600, 0.2, 0.04, 1100), 60);
+        const n = nightFactor();
+        playSound("sine", 300 * n.pitch, 0.25, 0.06, 900 * n.pitch);
+        setTimeout(() => playSound("triangle", 600 * n.pitch, 0.2, 0.04, 1100 * n.pitch), 60);
       },
       shieldBlock: () => playSound("square", 700, 0.15, 0.07, 200),
+      nightOn: () => {
+        playSound("sine", 200, 1.2, 0.05, 80);
+        setTimeout(() => playSound("triangle", 400, 0.8, 0.035, 150), 100);
+      },
+      dayOn: () => {
+        playSound("sine", 500, 0.8, 0.04, 1000);
+        setTimeout(() => playSound("triangle", 700, 0.6, 0.03, 1200), 80);
+      },
     };
+
+    // Estrelas com seeds aleatórios (regenerados ao alternar dia/noite)
+    type StarSeed = { x: number; y: number; phase: number };
+    const makeStarSeeds = () => {
+      const layers = [28, 18, 10];
+      return layers.map((count) =>
+        Array.from({ length: count + Math.floor(Math.random() * 8) }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          phase: Math.random() * Math.PI * 2,
+        })) as StarSeed[],
+      );
+    };
+    let starSeeds: StarSeed[][] = makeStarSeeds();
+    let prevThemeTarget = themeTargetRef.current;
+
+    // Fog/poeira ambiente (mais visível à noite)
+    type Fog = { x: number; y: number; r: number; vx: number; vy: number; alpha: number };
+    let fog: Fog[] = [];
 
     let prevOnGround = true;
     let obstacles: Rect[] = [];
@@ -496,13 +552,22 @@ export default function KaijuRunner() {
 
       // ===== auto night mode by score =====
       if (autoNightRef.current && !over) {
-        const wantNight = localScore >= NIGHT_THRESHOLD;
+        const wantNight = localScore >= nightThresholdRef.current;
         const nextTarget = wantNight ? 1 : 0;
         if (themeTargetRef.current !== nextTarget) {
           themeTargetRef.current = nextTarget;
           // sync app theme (smooth — dark class flips, but our canvas mix lerps)
           setTheme(wantNight ? "dark" : "light");
         }
+      }
+
+      // detecta mudança de alvo de tema → som de transição + regenera estrelas
+      if (themeTargetRef.current !== prevThemeTarget) {
+        if (themeTargetRef.current === 1) sounds.nightOn();
+        else sounds.dayOn();
+        // regenera seeds das estrelas (variação aleatória sem quebrar parallax — usado em todos os frames)
+        starSeeds = makeStarSeeds();
+        prevThemeTarget = themeTargetRef.current;
       }
 
       // smooth theme interpolation (mix: 0 = dia, 1 = noite)
@@ -547,41 +612,117 @@ export default function KaijuRunner() {
         ctx.globalAlpha = 1;
       }
 
-      // estrelas — 3 camadas de parallax + twinkle + float
+      // estrelas — 3 camadas de parallax + twinkle + float (seeds aleatórios)
       if (nightAlpha > 0.02) {
-        const layers = [
-          { count: 28, speed: 0.15, size: 1, alpha: 0.5 },
-          { count: 18, speed: 0.35, size: 2, alpha: 0.75 },
-          { count: 10, speed: 0.6, size: 2, alpha: 1.0 },
+        const layerCfg = [
+          { speed: 0.15, size: 1, alpha: 0.5 },
+          { speed: 0.35, size: 2, alpha: 0.75 },
+          { speed: 0.6, size: 2, alpha: 1.0 },
         ];
-        for (let li = 0; li < layers.length; li++) {
-          const L = layers[li];
-          for (let i = 0; i < L.count; i++) {
-            const seed = i * 97 + li * 311;
-            const baseX = (seed) % canvas.width;
+        for (let li = 0; li < starSeeds.length; li++) {
+          const L = layerCfg[li];
+          const stars = starSeeds[li];
+          for (let i = 0; i < stars.length; i++) {
+            const s = stars[i];
+            const baseX = s.x * canvas.width;
             const sx = (baseX + frame * L.speed) % canvas.width;
-            const baseY = (seed * 53) % (canvas.height - 100);
-            // float vertical leve (parallax)
-            const sy = baseY + Math.sin(frame * 0.02 + i * 0.7) * (1 + li);
-            // twinkle
-            const tw = 0.6 + 0.4 * Math.sin(frame * 0.06 + i * 1.3);
+            const baseY = s.y * (canvas.height - 100);
+            const sy = baseY + Math.sin(frame * 0.02 + s.phase) * (1 + li);
+            const tw = 0.6 + 0.4 * Math.sin(frame * 0.06 + s.phase * 2);
             ctx.globalAlpha = L.alpha * tw * nightAlpha;
             ctx.fillStyle = "hsl(0, 0%, 100%)";
             ctx.fillRect(canvas.width - sx, sy, L.size, L.size);
           }
         }
         ctx.globalAlpha = 1;
+
+        // Lua
+        const moonX = canvas.width - 80;
+        const moonY = 70;
+        const moonR = 22;
+        ctx.globalAlpha = nightAlpha;
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 3);
+        moonGlow.addColorStop(0, "hsla(50, 90%, 90%, 0.55)");
+        moonGlow.addColorStop(1, "hsla(50, 90%, 90%, 0)");
+        ctx.fillStyle = moonGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "hsl(50, 95%, 92%)";
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
 
       // ground (interpolado)
       ctx.fillStyle = mixHsl(95, 35, 45, 222, 30, 18);
       ctx.fillRect(0, groundY(), canvas.width, canvas.height - groundY());
+
+      // reflexo da lua no chão (intensidade baseada em mix)
+      if (nightAlpha > 0.05) {
+        const refX = canvas.width - 80;
+        const refY = groundY();
+        const refW = 220;
+        const refH = canvas.height - groundY();
+        const refGrad = ctx.createLinearGradient(refX, refY, refX, refY + refH);
+        const a = nightAlpha * 0.45;
+        refGrad.addColorStop(0, `hsla(50, 95%, 88%, ${a})`);
+        refGrad.addColorStop(0.5, `hsla(200, 80%, 70%, ${a * 0.5})`);
+        refGrad.addColorStop(1, "hsla(200, 80%, 70%, 0)");
+        ctx.fillStyle = refGrad;
+        ctx.beginPath();
+        ctx.ellipse(refX, refY, refW, refH * 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // brilho fino na linha do horizonte
+        ctx.strokeStyle = `hsla(50, 100%, 92%, ${nightAlpha * 0.6})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(refX - refW * 0.6, refY + 1);
+        ctx.lineTo(refX + refW * 0.6, refY + 1);
+        ctx.stroke();
+      }
+
       ctx.strokeStyle = mixHsl(95, 60, 30, 160, 80, 50);
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, groundY());
       ctx.lineTo(canvas.width, groundY());
       ctx.stroke();
+
+      // ===== fog/poeira ambiente — bem mais visível à noite, sutil de dia =====
+      const fogTargetCount = Math.floor(8 + nightAlpha * 22);
+      if (frame % 8 === 0 && fog.length < fogTargetCount) {
+        fog.push({
+          x: canvas.width + 20,
+          y: groundY() - 10 - Math.random() * 80,
+          r: 18 + Math.random() * 30,
+          vx: -(0.5 + Math.random() * 0.8),
+          vy: -0.05 - Math.random() * 0.1,
+          alpha: 0.3 + Math.random() * 0.4,
+        });
+      }
+      for (let i = fog.length - 1; i >= 0; i--) {
+        const f = fog[i];
+        f.x += f.vx;
+        f.y += f.vy;
+        f.alpha -= 0.002;
+        if (f.x + f.r < 0 || f.alpha <= 0) {
+          fog.splice(i, 1);
+          continue;
+        }
+        // tonalidade muda dia/noite; alpha ponderado pelo mix
+        const dayA = f.alpha * 0.18;
+        const nightA = f.alpha * 0.55;
+        const a = lerp(dayA, nightA, mix);
+        ctx.fillStyle = mix > 0.5
+          ? `hsla(220, 40%, 70%, ${a})`
+          : `hsla(40, 30%, 85%, ${a})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // dust
       dust.forEach((d) => {
@@ -978,7 +1119,7 @@ export default function KaijuRunner() {
             size="sm"
             onClick={() => setAutoNight((v) => !v)}
             className="font-mono text-xs"
-            title={`Vira noite ao atingir ${NIGHT_THRESHOLD} pts`}
+            title={`Vira noite ao atingir ${nightThreshold} pts`}
           >
             {autoNight ? "🌙 Auto-Noite: ON" : "🌙 Auto-Noite: OFF"}
           </Button>
@@ -986,11 +1127,38 @@ export default function KaijuRunner() {
         </div>
       </div>
       {autoNight && (
-        <p className="text-xs text-muted-foreground font-mono -mt-2">
-          {score < NIGHT_THRESHOLD
-            ? `☀️ Modo dia · vira noite em ${NIGHT_THRESHOLD - score} pts`
-            : `🌙 Modo noite ativo · volta ao dia se a pontuação cair abaixo de ${NIGHT_THRESHOLD}`}
-        </p>
+        <div className="-mt-2 flex flex-col gap-1">
+          <p className="text-xs text-muted-foreground font-mono">
+            {score < nightThreshold
+              ? `☀️ Modo dia · vira noite em ${nightThreshold - score} pts`
+              : `🌙 Modo noite ativo · volta ao dia se a pontuação cair abaixo de ${nightThreshold}`}
+          </p>
+          <div className="flex items-center gap-2">
+            <label htmlFor="night-th" className="text-xs font-mono text-muted-foreground">
+              Limiar:
+            </label>
+            <input
+              id="night-th"
+              type="number"
+              min={0}
+              step={50}
+              value={nightThreshold}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (Number.isFinite(n) && n >= 0) setNightThreshold(n);
+              }}
+              className="w-24 h-7 px-2 rounded border border-border bg-background text-xs font-mono"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setNightThreshold(300)}
+            >
+              ↺ Padrão
+            </Button>
+          </div>
+        </div>
       )}
 
       {showSkinMenu && (
