@@ -612,41 +612,117 @@ export default function KaijuRunner() {
         ctx.globalAlpha = 1;
       }
 
-      // estrelas — 3 camadas de parallax + twinkle + float
+      // estrelas — 3 camadas de parallax + twinkle + float (seeds aleatórios)
       if (nightAlpha > 0.02) {
-        const layers = [
-          { count: 28, speed: 0.15, size: 1, alpha: 0.5 },
-          { count: 18, speed: 0.35, size: 2, alpha: 0.75 },
-          { count: 10, speed: 0.6, size: 2, alpha: 1.0 },
+        const layerCfg = [
+          { speed: 0.15, size: 1, alpha: 0.5 },
+          { speed: 0.35, size: 2, alpha: 0.75 },
+          { speed: 0.6, size: 2, alpha: 1.0 },
         ];
-        for (let li = 0; li < layers.length; li++) {
-          const L = layers[li];
-          for (let i = 0; i < L.count; i++) {
-            const seed = i * 97 + li * 311;
-            const baseX = (seed) % canvas.width;
+        for (let li = 0; li < starSeeds.length; li++) {
+          const L = layerCfg[li];
+          const stars = starSeeds[li];
+          for (let i = 0; i < stars.length; i++) {
+            const s = stars[i];
+            const baseX = s.x * canvas.width;
             const sx = (baseX + frame * L.speed) % canvas.width;
-            const baseY = (seed * 53) % (canvas.height - 100);
-            // float vertical leve (parallax)
-            const sy = baseY + Math.sin(frame * 0.02 + i * 0.7) * (1 + li);
-            // twinkle
-            const tw = 0.6 + 0.4 * Math.sin(frame * 0.06 + i * 1.3);
+            const baseY = s.y * (canvas.height - 100);
+            const sy = baseY + Math.sin(frame * 0.02 + s.phase) * (1 + li);
+            const tw = 0.6 + 0.4 * Math.sin(frame * 0.06 + s.phase * 2);
             ctx.globalAlpha = L.alpha * tw * nightAlpha;
             ctx.fillStyle = "hsl(0, 0%, 100%)";
             ctx.fillRect(canvas.width - sx, sy, L.size, L.size);
           }
         }
         ctx.globalAlpha = 1;
+
+        // Lua
+        const moonX = canvas.width - 80;
+        const moonY = 70;
+        const moonR = 22;
+        ctx.globalAlpha = nightAlpha;
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 3);
+        moonGlow.addColorStop(0, "hsla(50, 90%, 90%, 0.55)");
+        moonGlow.addColorStop(1, "hsla(50, 90%, 90%, 0)");
+        ctx.fillStyle = moonGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "hsl(50, 95%, 92%)";
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
 
       // ground (interpolado)
       ctx.fillStyle = mixHsl(95, 35, 45, 222, 30, 18);
       ctx.fillRect(0, groundY(), canvas.width, canvas.height - groundY());
+
+      // reflexo da lua no chão (intensidade baseada em mix)
+      if (nightAlpha > 0.05) {
+        const refX = canvas.width - 80;
+        const refY = groundY();
+        const refW = 220;
+        const refH = canvas.height - groundY();
+        const refGrad = ctx.createLinearGradient(refX, refY, refX, refY + refH);
+        const a = nightAlpha * 0.45;
+        refGrad.addColorStop(0, `hsla(50, 95%, 88%, ${a})`);
+        refGrad.addColorStop(0.5, `hsla(200, 80%, 70%, ${a * 0.5})`);
+        refGrad.addColorStop(1, "hsla(200, 80%, 70%, 0)");
+        ctx.fillStyle = refGrad;
+        ctx.beginPath();
+        ctx.ellipse(refX, refY, refW, refH * 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // brilho fino na linha do horizonte
+        ctx.strokeStyle = `hsla(50, 100%, 92%, ${nightAlpha * 0.6})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(refX - refW * 0.6, refY + 1);
+        ctx.lineTo(refX + refW * 0.6, refY + 1);
+        ctx.stroke();
+      }
+
       ctx.strokeStyle = mixHsl(95, 60, 30, 160, 80, 50);
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, groundY());
       ctx.lineTo(canvas.width, groundY());
       ctx.stroke();
+
+      // ===== fog/poeira ambiente — bem mais visível à noite, sutil de dia =====
+      const fogTargetCount = Math.floor(8 + nightAlpha * 22);
+      if (frame % 8 === 0 && fog.length < fogTargetCount) {
+        fog.push({
+          x: canvas.width + 20,
+          y: groundY() - 10 - Math.random() * 80,
+          r: 18 + Math.random() * 30,
+          vx: -(0.5 + Math.random() * 0.8),
+          vy: -0.05 - Math.random() * 0.1,
+          alpha: 0.3 + Math.random() * 0.4,
+        });
+      }
+      for (let i = fog.length - 1; i >= 0; i--) {
+        const f = fog[i];
+        f.x += f.vx;
+        f.y += f.vy;
+        f.alpha -= 0.002;
+        if (f.x + f.r < 0 || f.alpha <= 0) {
+          fog.splice(i, 1);
+          continue;
+        }
+        // tonalidade muda dia/noite; alpha ponderado pelo mix
+        const dayA = f.alpha * 0.18;
+        const nightA = f.alpha * 0.55;
+        const a = lerp(dayA, nightA, mix);
+        ctx.fillStyle = mix > 0.5
+          ? `hsla(220, 40%, 70%, ${a})`
+          : `hsla(40, 30%, 85%, ${a})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // dust
       dust.forEach((d) => {
