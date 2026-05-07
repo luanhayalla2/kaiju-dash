@@ -1000,7 +1000,33 @@ export default function KaijuRunner() {
             {score < nightThreshold
               ? `☀️ Modo dia · vira noite em ${nightThreshold - score} pts`
               : `🌙 Modo noite ativo · volta ao dia se a pontuação cair abaixo de ${nightThreshold}`}
-        </p>
+          </p>
+          <div className="flex items-center gap-2">
+            <label htmlFor="night-th" className="text-xs font-mono text-muted-foreground">
+              Limiar:
+            </label>
+            <input
+              id="night-th"
+              type="number"
+              min={0}
+              step={50}
+              value={nightThreshold}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (Number.isFinite(n) && n >= 0) setNightThreshold(n);
+              }}
+              className="w-24 h-7 px-2 rounded border border-border bg-background text-xs font-mono"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setNightThreshold(300)}
+            >
+              ↺ Padrão
+            </Button>
+          </div>
+        </div>
       )}
 
       {showSkinMenu && (
