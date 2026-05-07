@@ -198,6 +198,25 @@ export default function KaijuRunner() {
       },
     };
 
+    // Estrelas com seeds aleatórios (regenerados ao alternar dia/noite)
+    type StarSeed = { x: number; y: number; phase: number };
+    const makeStarSeeds = () => {
+      const layers = [28, 18, 10];
+      return layers.map((count) =>
+        Array.from({ length: count + Math.floor(Math.random() * 8) }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          phase: Math.random() * Math.PI * 2,
+        })) as StarSeed[],
+      );
+    };
+    let starSeeds: StarSeed[][] = makeStarSeeds();
+    let prevThemeTarget = themeTargetRef.current;
+
+    // Fog/poeira ambiente (mais visível à noite)
+    type Fog = { x: number; y: number; r: number; vx: number; vy: number; alpha: number };
+    let fog: Fog[] = [];
+
     let prevOnGround = true;
     let obstacles: Rect[] = [];
     let enemies: Rect[] = [];
