@@ -542,6 +542,15 @@ export default function KaijuRunner() {
         }
       }
 
+      // detecta mudança de alvo de tema → som de transição + regenera estrelas
+      if (themeTargetRef.current !== prevThemeTarget) {
+        if (themeTargetRef.current === 1) sounds.nightOn();
+        else sounds.dayOn();
+        // regenera seeds das estrelas (variação aleatória sem quebrar parallax — usado em todos os frames)
+        starSeeds = makeStarSeeds();
+        prevThemeTarget = themeTargetRef.current;
+      }
+
       // smooth theme interpolation (mix: 0 = dia, 1 = noite)
       const target = themeTargetRef.current;
       themeMixRef.current += (target - themeMixRef.current) * 0.04;
