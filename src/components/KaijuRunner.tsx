@@ -114,11 +114,15 @@ export default function KaijuRunner() {
     const ctx = canvas.getContext("2d")!;
 
     const resize = () => {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
+      const w = Math.max(320, canvas.clientWidth | 0);
+      const h = Math.max(240, canvas.clientHeight | 0);
+      if (canvas.width !== w) canvas.width = w;
+      if (canvas.height !== h) canvas.height = h;
     };
     resize();
     window.addEventListener("resize", resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
 
     const groundY = () => canvas.height - 60;
 
@@ -1040,29 +1044,30 @@ export default function KaijuRunner() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", onKey);
       canvas.removeEventListener("pointerdown", onPointer);
+      ro.disconnect();
     };
   }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-4">
-      <div className="flex items-center gap-4 bg-card p-4 rounded-xl border border-border shadow-md">
-        <img src="/logo.png" alt="Kaiju Dash Logo" className="w-16 h-16 rounded-lg object-cover border border-primary/20" />
-        <div>
-          <h1 className="text-2xl font-black tracking-tighter text-primary italic uppercase">Kaiju Dash</h1>
-          <p className="text-xs text-muted-foreground font-mono">Survival Protocol: Active</p>
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 sm:gap-4 px-2 sm:px-0">
+      <div className="flex items-center gap-3 sm:gap-4 bg-gradient-to-r from-card via-card to-card/70 p-3 sm:p-4 rounded-xl border border-border shadow-md backdrop-blur">
+        <img src="/logo.png" alt="Kaiju Dash Logo" className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border border-primary/20 shadow-sm" />
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tighter text-primary italic uppercase truncate">Kaiju Dash</h1>
+          <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">Survival Protocol: Active</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between text-sm md:text-base flex-wrap gap-2">
-        <div className="flex gap-4 font-mono items-center">
-          <span className="text-primary">Pontos: {score}</span>
+        <div className="flex gap-3 sm:gap-4 font-mono items-center text-xs sm:text-sm">
+          <span className="text-primary font-bold">Pontos: {score}</span>
           <span className="text-muted-foreground">Recorde: {best}</span>
-          <span className="flex gap-1" aria-label={`Vidas: ${hp}`}>
+          <span className="flex gap-1 text-base sm:text-lg" aria-label={`Vidas: ${hp}`}>
             {Array.from({ length: 3 }).map((_, i) => (
               <span
                 key={i}
                 className={
-                  i < hp ? "text-destructive" : "text-muted-foreground/30"
+                  i < hp ? "text-destructive drop-shadow-[0_0_4px_hsl(var(--destructive)/0.6)]" : "text-muted-foreground/30"
                 }
               >
                 ❤
@@ -1074,6 +1079,7 @@ export default function KaijuRunner() {
           Espaço/Toque = Pular · X = Laser · C = Escudo
         </div>
       </div>
+
 
       {invulnPct > 0 && (
         <div
@@ -1238,30 +1244,35 @@ export default function KaijuRunner() {
         </div>
       )}
 
-      <div className="relative rounded-lg overflow-hidden border border-border shadow-2xl bg-background">
+      <div
+        className="relative rounded-xl overflow-hidden border border-border shadow-2xl bg-background ring-1 ring-primary/10"
+        style={{ aspectRatio: "16 / 9", maxHeight: "70vh" }}
+      >
         <canvas
           ref={canvasRef}
-          className="block w-full h-[60vh] touch-none select-none"
+          className="block w-full h-full touch-none select-none"
         />
+        <div className="pointer-events-none absolute inset-0 rounded-xl shadow-[inset_0_0_60px_hsl(var(--background)/0.4)]" />
         {gameOver && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm">
-            <h2 className="text-3xl md:text-5xl font-bold text-destructive">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-md animate-in fade-in">
+            <h2 className="text-3xl md:text-5xl font-black text-destructive tracking-tight drop-shadow-[0_0_20px_hsl(var(--destructive)/0.5)]">
               Game Over
             </h2>
-            <p className="text-lg">Pontos: {score}</p>
-            <Button size="lg" onClick={() => restartRef.current()}>
+            <p className="text-base sm:text-lg font-mono">Pontos: <span className="text-primary font-bold">{score}</span></p>
+            <Button size="lg" onClick={() => restartRef.current()} className="shadow-lg">
               Jogar de novo
             </Button>
           </div>
         )}
       </div>
 
-      <div className="flex justify-center gap-3">
+      <div className="flex justify-center gap-3 sm:gap-4 pb-2">
         <Button
           variant="default"
           size="lg"
           onClick={() => shootRef.current()}
           disabled={gameOver}
+          className="flex-1 sm:flex-none sm:min-w-[140px] text-base sm:text-lg font-bold shadow-md active:scale-95 transition-transform"
         >
           🔥 Laser
         </Button>
@@ -1270,6 +1281,7 @@ export default function KaijuRunner() {
           size="lg"
           onClick={() => shieldRef.current()}
           disabled={gameOver || shieldActive}
+          className="flex-1 sm:flex-none sm:min-w-[140px] text-base sm:text-lg font-bold shadow-md active:scale-95 transition-transform"
         >
           🛡️ Escudo
         </Button>
