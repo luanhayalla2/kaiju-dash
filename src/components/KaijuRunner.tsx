@@ -1049,25 +1049,25 @@ export default function KaijuRunner() {
   }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-4">
-      <div className="flex items-center gap-4 bg-card p-4 rounded-xl border border-border shadow-md">
-        <img src="/logo.png" alt="Kaiju Dash Logo" className="w-16 h-16 rounded-lg object-cover border border-primary/20" />
-        <div>
-          <h1 className="text-2xl font-black tracking-tighter text-primary italic uppercase">Kaiju Dash</h1>
-          <p className="text-xs text-muted-foreground font-mono">Survival Protocol: Active</p>
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 sm:gap-4 px-2 sm:px-0">
+      <div className="flex items-center gap-3 sm:gap-4 bg-gradient-to-r from-card via-card to-card/70 p-3 sm:p-4 rounded-xl border border-border shadow-md backdrop-blur">
+        <img src="/logo.png" alt="Kaiju Dash Logo" className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border border-primary/20 shadow-sm" />
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tighter text-primary italic uppercase truncate">Kaiju Dash</h1>
+          <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">Survival Protocol: Active</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between text-sm md:text-base flex-wrap gap-2">
-        <div className="flex gap-4 font-mono items-center">
-          <span className="text-primary">Pontos: {score}</span>
+        <div className="flex gap-3 sm:gap-4 font-mono items-center text-xs sm:text-sm">
+          <span className="text-primary font-bold">Pontos: {score}</span>
           <span className="text-muted-foreground">Recorde: {best}</span>
-          <span className="flex gap-1" aria-label={`Vidas: ${hp}`}>
+          <span className="flex gap-1 text-base sm:text-lg" aria-label={`Vidas: ${hp}`}>
             {Array.from({ length: 3 }).map((_, i) => (
               <span
                 key={i}
                 className={
-                  i < hp ? "text-destructive" : "text-muted-foreground/30"
+                  i < hp ? "text-destructive drop-shadow-[0_0_4px_hsl(var(--destructive)/0.6)]" : "text-muted-foreground/30"
                 }
               >
                 ❤
@@ -1079,6 +1079,7 @@ export default function KaijuRunner() {
           Espaço/Toque = Pular · X = Laser · C = Escudo
         </div>
       </div>
+
 
       {invulnPct > 0 && (
         <div
