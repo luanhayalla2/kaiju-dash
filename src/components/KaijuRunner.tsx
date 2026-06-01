@@ -1244,30 +1244,35 @@ export default function KaijuRunner() {
         </div>
       )}
 
-      <div className="relative rounded-lg overflow-hidden border border-border shadow-2xl bg-background">
+      <div
+        className="relative rounded-xl overflow-hidden border border-border shadow-2xl bg-background ring-1 ring-primary/10"
+        style={{ aspectRatio: "16 / 9", maxHeight: "70vh" }}
+      >
         <canvas
           ref={canvasRef}
-          className="block w-full h-[60vh] touch-none select-none"
+          className="block w-full h-full touch-none select-none"
         />
+        <div className="pointer-events-none absolute inset-0 rounded-xl shadow-[inset_0_0_60px_hsl(var(--background)/0.4)]" />
         {gameOver && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm">
-            <h2 className="text-3xl md:text-5xl font-bold text-destructive">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-md animate-in fade-in">
+            <h2 className="text-3xl md:text-5xl font-black text-destructive tracking-tight drop-shadow-[0_0_20px_hsl(var(--destructive)/0.5)]">
               Game Over
             </h2>
-            <p className="text-lg">Pontos: {score}</p>
-            <Button size="lg" onClick={() => restartRef.current()}>
+            <p className="text-base sm:text-lg font-mono">Pontos: <span className="text-primary font-bold">{score}</span></p>
+            <Button size="lg" onClick={() => restartRef.current()} className="shadow-lg">
               Jogar de novo
             </Button>
           </div>
         )}
       </div>
 
-      <div className="flex justify-center gap-3">
+      <div className="flex justify-center gap-3 sm:gap-4 pb-2">
         <Button
           variant="default"
           size="lg"
           onClick={() => shootRef.current()}
           disabled={gameOver}
+          className="flex-1 sm:flex-none sm:min-w-[140px] text-base sm:text-lg font-bold shadow-md active:scale-95 transition-transform"
         >
           🔥 Laser
         </Button>
@@ -1276,6 +1281,7 @@ export default function KaijuRunner() {
           size="lg"
           onClick={() => shieldRef.current()}
           disabled={gameOver || shieldActive}
+          className="flex-1 sm:flex-none sm:min-w-[140px] text-base sm:text-lg font-bold shadow-md active:scale-95 transition-transform"
         >
           🛡️ Escudo
         </Button>
