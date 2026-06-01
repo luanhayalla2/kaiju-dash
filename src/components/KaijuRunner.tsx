@@ -1044,6 +1044,7 @@ export default function KaijuRunner() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", onKey);
       canvas.removeEventListener("pointerdown", onPointer);
+      ro.disconnect();
     };
   }, []);
 
