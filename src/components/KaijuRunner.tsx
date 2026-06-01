@@ -114,11 +114,15 @@ export default function KaijuRunner() {
     const ctx = canvas.getContext("2d")!;
 
     const resize = () => {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
+      const w = Math.max(320, canvas.clientWidth | 0);
+      const h = Math.max(240, canvas.clientHeight | 0);
+      if (canvas.width !== w) canvas.width = w;
+      if (canvas.height !== h) canvas.height = h;
     };
     resize();
     window.addEventListener("resize", resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
 
     const groundY = () => canvas.height - 60;
 
