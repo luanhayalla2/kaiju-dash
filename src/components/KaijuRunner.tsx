@@ -1276,23 +1276,29 @@ export default function KaijuRunner() {
       )}
 
       {/* Canvas frame */}
-      <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-primary/40 via-primary/10 to-destructive/30 shadow-2xl">
-        <div
-          className="relative rounded-[15px] overflow-hidden bg-background"
-          style={{ aspectRatio: "16 / 9", maxHeight: "70vh" }}
-        >
-          <canvas
-            ref={canvasRef}
-            className="block w-full h-full touch-none select-none"
-          />
-          <div className="pointer-events-none absolute inset-0 rounded-[15px] shadow-[inset_0_0_80px_hsl(var(--background)/0.55)]" />
+      <div className="relative group">
+        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/40 via-fuchsia-500/20 to-destructive/40 blur-xl opacity-60 group-hover:opacity-80 transition-opacity pointer-events-none" />
+        <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-primary/60 via-primary/10 to-destructive/50 shadow-2xl">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay"
+            className="relative rounded-[15px] overflow-hidden bg-background"
             style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 1px, transparent 1px 3px)",
+              aspectRatio: "16 / 9",
+              maxHeight: "min(70vh, 720px)",
+              minHeight: "220px",
             }}
-          />
+          >
+            <canvas
+              ref={canvasRef}
+              className="block w-full h-full touch-none select-none"
+            />
+            <div className="pointer-events-none absolute inset-0 rounded-[15px] shadow-[inset_0_0_120px_hsl(var(--background)/0.7)]" />
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 1px, transparent 1px 3px)",
+              }}
+            />
           {gameOver && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-md animate-in fade-in">
               <h2 className="text-4xl md:text-6xl font-black text-destructive tracking-tighter italic uppercase drop-shadow-[0_0_25px_hsl(var(--destructive)/0.6)]">
