@@ -1049,7 +1049,7 @@ export default function KaijuRunner() {
   }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 sm:gap-4 px-2 sm:px-0">
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 md:px-0">
       {/* Header */}
       <div className="relative overflow-hidden flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-primary/20 shadow-lg backdrop-blur-xl bg-gradient-to-r from-card/90 via-card/70 to-card/40">
         <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
