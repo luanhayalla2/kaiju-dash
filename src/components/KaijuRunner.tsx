@@ -1049,7 +1049,7 @@ export default function KaijuRunner() {
   }, []);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-3 sm:gap-4 px-2 sm:px-0">
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 md:px-0">
       {/* Header */}
       <div className="relative overflow-hidden flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-primary/20 shadow-lg backdrop-blur-xl bg-gradient-to-r from-card/90 via-card/70 to-card/40">
         <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
@@ -1276,23 +1276,29 @@ export default function KaijuRunner() {
       )}
 
       {/* Canvas frame */}
-      <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-primary/40 via-primary/10 to-destructive/30 shadow-2xl">
-        <div
-          className="relative rounded-[15px] overflow-hidden bg-background"
-          style={{ aspectRatio: "16 / 9", maxHeight: "70vh" }}
-        >
-          <canvas
-            ref={canvasRef}
-            className="block w-full h-full touch-none select-none"
-          />
-          <div className="pointer-events-none absolute inset-0 rounded-[15px] shadow-[inset_0_0_80px_hsl(var(--background)/0.55)]" />
+      <div className="relative group">
+        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/40 via-fuchsia-500/20 to-destructive/40 blur-xl opacity-60 group-hover:opacity-80 transition-opacity pointer-events-none" />
+        <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-primary/60 via-primary/10 to-destructive/50 shadow-2xl">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay"
+            className="relative rounded-[15px] overflow-hidden bg-background"
             style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 1px, transparent 1px 3px)",
+              aspectRatio: "16 / 9",
+              maxHeight: "min(70vh, 720px)",
+              minHeight: "220px",
             }}
-          />
+          >
+            <canvas
+              ref={canvasRef}
+              className="block w-full h-full touch-none select-none"
+            />
+            <div className="pointer-events-none absolute inset-0 rounded-[15px] shadow-[inset_0_0_120px_hsl(var(--background)/0.7)]" />
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 1px, transparent 1px 3px)",
+              }}
+            />
           {gameOver && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-md animate-in fade-in">
               <h2 className="text-4xl md:text-6xl font-black text-destructive tracking-tighter italic uppercase drop-shadow-[0_0_25px_hsl(var(--destructive)/0.6)]">
@@ -1306,6 +1312,7 @@ export default function KaijuRunner() {
               </Button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
