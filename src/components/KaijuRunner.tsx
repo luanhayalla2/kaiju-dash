@@ -1049,7 +1049,10 @@ export default function KaijuRunner() {
   }, []);
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 md:px-0">
+    <div
+      className="w-full mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 md:px-0"
+      style={{ maxWidth: "min(100%, calc((min(70vh, 720px) - 4px) * 16 / 9))" }}
+    >
       {/* Header */}
       <div className="relative overflow-hidden flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-primary/20 shadow-lg bg-gradient-to-r from-card via-card/80 to-card/60">
         <img
@@ -1282,7 +1285,7 @@ export default function KaijuRunner() {
               aspectRatio: "16 / 9",
               maxHeight: "min(70vh, 720px)",
               minHeight: "220px",
-              contain: "layout paint size",
+              contain: "layout paint",
             }}
           >
             <canvas
