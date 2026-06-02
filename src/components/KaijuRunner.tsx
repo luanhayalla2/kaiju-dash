@@ -1285,7 +1285,7 @@ export default function KaijuRunner() {
               aspectRatio: "16 / 9",
               maxHeight: "min(70vh, 720px)",
               minHeight: "220px",
-              contain: "layout paint size",
+              contain: "layout paint",
             }}
           >
             <canvas
