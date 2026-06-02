@@ -1051,9 +1051,7 @@ export default function KaijuRunner() {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-2 sm:gap-3 md:gap-4 px-2 sm:px-3 md:px-0">
       {/* Header */}
-      <div className="relative overflow-hidden flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-primary/20 shadow-lg backdrop-blur-xl bg-gradient-to-r from-card/90 via-card/70 to-card/40">
-        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full bg-destructive/10 blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border border-primary/20 shadow-lg bg-gradient-to-r from-card via-card/80 to-card/60">
         <img
           src="/logo.png"
           alt="Kaiju Dash Logo"
