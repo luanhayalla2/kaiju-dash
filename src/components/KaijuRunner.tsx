@@ -1275,28 +1275,27 @@ export default function KaijuRunner() {
         </div>
       )}
 
-      {/* Canvas frame */}
-      <div className="relative group">
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-primary/40 via-fuchsia-500/20 to-destructive/40 blur-xl opacity-60 group-hover:opacity-80 transition-opacity pointer-events-none" />
-        <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-primary/60 via-primary/10 to-destructive/50 shadow-2xl">
+      {/* Canvas frame — lightweight: no blur halo, no scanline overlay (drawn in canvas instead if desired) */}
+      <div className="relative">
+        <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-primary/50 via-primary/10 to-destructive/40 shadow-xl">
           <div
             className="relative rounded-[15px] overflow-hidden bg-background"
             style={{
               aspectRatio: "16 / 9",
               maxHeight: "min(70vh, 720px)",
               minHeight: "220px",
+              contain: "layout paint size",
             }}
           >
             <canvas
               ref={canvasRef}
               className="block w-full h-full touch-none select-none"
             />
-            <div className="pointer-events-none absolute inset-0 rounded-[15px] shadow-[inset_0_0_120px_hsl(var(--background)/0.7)]" />
             <div
-              className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-[15px]"
               style={{
-                backgroundImage:
-                  "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 1px, transparent 1px 3px)",
+                boxShadow: "inset 0 0 80px hsl(var(--background) / 0.55)",
               }}
             />
           {gameOver && (
